@@ -1,0 +1,6 @@
+<parameters>
+  <param label="Processors" name="processors" type="integer" size="2" min="1" max="48" value="" help="Number of processing cores, 'ppn' value (1-48). Leave blank to use default value." />
+  <param label="Memory" name="memory" type="integer" size="3" min="1" max="256" value="" help="Memory size in gigabytes, 'pmem' value (1-256). Leave blank to use default value." />
+  <param label="Time" name="time" type="integer" size="3" min="1" max="120" value="" help="Maximum job time in hours, 'walltime' value (1-120). Leave blank to use default value." />
+  <param label="Account" name="account" type="string" size="20" value="" help="Allocation account to use." />
+</parameters>

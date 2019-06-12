@@ -1,0 +1,88 @@
+#!/bin/bash
+valid_option="command path project user group quota conf perm"
+
+# clean options
+for i in $valid_option;do unset m_$i;done
+
+function help() {
+cat <<fin667
+syntax:
+$(basename $0) [COMMMAND] --project=[PROJECT] <OPTIONS>
+COMMAND: create destroy update 
+
+minimum example:
+$(basename $0) create --user=bill --project=smith --quota=500G
+$(basename $0) update --project=smith --quota=500G
+
+
+full example:
+$(basename $0) create --user=bill --group=smith --quota=500G --project=smith --perm=770 --pool=tank/genapprojects
+$(basename $0) update --user=bill --group=smith --quota=500G --project=smith --perm=770 --pool=tank/genapprojects
+fin667
+}
+
+
+m_command=$1
+
+while test $# -gt 0; do
+  for i in $valid_option;do
+     if [[ $1 =~ "--$i=" ]];then
+       printf -v "m_"$i "$(echo $1 | sed -e 's/^[^=]*=//g')"
+     fi
+  done
+  shift
+done
+
+if [ -z "$m_command" ];then help;exit 0;fi
+
+
+# Source software configuration
+if [ -f $0.conf ];then source $0.conf;fi
+
+# Source command line file configuration
+if [ -f "$m_conf" ];then source $m_conf;fi
+
+# Default genap project
+if [ -z "$GENAP_PROJECT_POOL" ];then GENAP_PROJECT_POOL=satapool/genapprojects;fi
+if [ -z "$m_project" ];then help;fi
+
+
+function die {
+echo $*
+exit 1
+}
+
+
+
+function folder_update {
+  if [ -n "$m_project" ];then
+    project_path="$(zfs get -H -o value mountpoint $GENAP_PROJECT_POOL/$m_project)" ||die "Bad project"
+  else
+    help
+  fi
+  if [ -n "$m_user" ];then chown $m_user $project_path;fi
+  if [ -n "$m_group" ];then chgrp $m_group $project_path;fi
+  if [ -n "$m_perm" ];then chmod $m_perm $project_path ;fi
+  if [ -n "$m_quota" ];then zfs set refquota=$m_quota $GENAP_PROJECT_POOL/$m_project;fi
+  if [ ! -d "/home/$m_user" ];then mkhomedir_helper $m_user;fi
+}
+
+function folder_create {
+  zfs create $GENAP_PROJECT_POOL/$m_project ||die
+  zfs refquota=1M $GENAP_PROJECT_POOL/$m_project
+  folder_update
+}
+
+
+function folder_destroy {
+  [ -n "$m_project" ] || die "need project"
+#  [ -n "$GENAP_I_KNOW_WHAT_I_AM_DOING" ] ||die "you are not mature enough to run this command"
+  if [ -n "$GENAP_I_KNOW_WHAT_I_AM_DOING" ]; then
+    zfs destroy -r $GENAP_PROJECT_POOL/$m_project
+  else
+    zfs rename $GENAP_PROJECT_POOL/$m_project satapool/purgatoire/$m_project-$(date  +"%Y-%M-%d-%s") ||die "pas de purgatoire"
+  fi
+}
+
+
+folder_${m_command}
