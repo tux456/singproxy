@@ -169,8 +169,8 @@ function remote_connect {
  
 #  echo user=$remote_user dns=$remote_dns port=$remote_port
 
-if [ -f /nfs3_ib/ip24/home.local/barrette.share/ccproxy.slurm/autossh ];then 
-  SSH_COMMAND="/nfs3_ib/ip24/home.local/barrette.share/ccproxy.slurm/autossh -M0"
+if [ -f $CCPROXY_AUTOSSH ];then
+  SSH_COMMAND="$CCPROXY_AUTOSSH -M0"
 else
   SSH_COMMAND="ssh"
 fi
