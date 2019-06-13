@@ -121,10 +121,10 @@ function remote_freeport {
   read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
   while :
   do
-    PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
+    REMOTE_FREE_PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
     ss -lpn | grep -q ":$PORT " || break
 done
-echo $PORT
+echo $REMOTE_FREE_PORT
 }
 
 function remote_get {
@@ -310,7 +310,7 @@ function start_prolog() {
 
 function start_epilog() {
 #if [ ! "$m_autostart" == "false" ] ;then ${m_app}_start;fi
-   remote_connect
+   remote_connect $REMOTE_FREE_PORT
 }
 
 
