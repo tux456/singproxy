@@ -3,7 +3,7 @@
 
 
 # Configure /etc/ssh/sshd_config
-
+```
 Port 12345
 PasswordAuthentication no
 ChallengeResponseAuthentication no
@@ -17,7 +17,7 @@ StreamLocalBindUnlink yes
 HostbasedAuthentication yes
 Match User *,!ubuntu,!admin_user
   ForceCommand /bin/false
-
+```
 
 # Add public "client" server keys in shosts.equiv
 ````

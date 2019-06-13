@@ -19,9 +19,9 @@ PATH: <user data path of the service>
 OPTIONS: --remote=<URL> --conf=<file>
 
 example:
-$(basename $0) create --app=dtn --path=~/projects/my_shared_project
-$(basename $0) stop --app=dtn --path=~/projects/my_shared_project
-$(basename $0) destroy --app=dtn --path=~/projects/my_shared_project
+$(basename $0) create --app=filebrowser --path=~/projects/my_shared_project
+$(basename $0) stop --app=filebrowser --path=~/projects/my_shared_project
+$(basename $0) destroy --app=filebrowser --path=~/projects/my_shared_project
 fin667
 }
 
