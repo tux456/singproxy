@@ -47,14 +47,15 @@ if [ -z "$m_command" ];then help;exit 0;fi
 
 
 # Source software configuration
-if [ -f $0.conf ];then 
-  #echo source $0.conf
-  source $0.conf 
+NAME_CONF=$(dirname $0)/conf/$(basename $0).conf
+if [ -f $NAME_CONF ];then 
+#  echo source $NAME_CONF
+  source $NAME_CONF
 fi
 
 # Source command line file configuration
 if [ -f "$m_conf" ];then
-  #echo source $m_conf
+#  echo source $m_conf
   source $m_conf
 fi
 
