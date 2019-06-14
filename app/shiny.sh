@@ -36,7 +36,14 @@ fin666
 function shiny_start() {
    SHINY_PORT=$(remote_freeport)
    sed "s/listen .*/listen $SHINY_PORT;/" -i $app_confdir/shiny-server.conf
-   singularity instance start -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B  $app_path/.shiny/lib:/var/lib/shiny-server -B $app_path/ftp:/ftp docker://rocker/shiny $app_id
+
+   if [ -f "$GENAP_SHINY_IMAGE" ];then 
+     SHINY_IMAGE=$GENAP_SHINY_IMAGE
+   else
+     SHINY_IMAGE=docker://rocker/shiny
+   fi
+
+   singularity instance start -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B  $app_path/.shiny/lib:/var/lib/shiny-server -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
    singularity exec instance://$app_id bash -c "nohup shiny-server &"
 
    export REMOTE_FREE_PORT=$SHINY_PORT

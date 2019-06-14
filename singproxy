@@ -306,6 +306,9 @@ function start_prolog() {
   echo "STARTED" >$app_confdir/status
   starter_set
   echo "Starting $app_id on $(hostname) ..."
+
+  # Clean old socket
+  if [ -f $app_confdir/app.sock ];then echo rm -f $app_confdir/app.sock;rm -f $app_confdir/app.sock;fi
 }
 
 function start_epilog() {

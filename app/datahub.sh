@@ -20,7 +20,15 @@ fin666
 
 
 function datahub_start() {
-   singularity instance start -B $app_confdir/:/etc/nginx/conf.d -B $app_confdir/:/var/log/nginx -B $app_confdir:/var/run -B $app_confdir/:/var/cache/nginx/ -B $app_path:/data docker://nginx $app_id
+
+   if [ -f "$GENAP_DATAHUB_IMAGE" ];then
+     DATAHUB_IMAGE=$GENAP_DATAHUB_IMAGE
+   else
+     DATAHUB_IMAGE=docker://nginx
+   fi
+   mkdir -p $app_confdir/{var/log/nginx,var/run,var/cache/nginx}
+   #singularity instance start -B $app_confdir/:/etc/nginx/conf.d -B $app_confdir/var:/var/log/nginx -B $app_confdir/run:/var/run -B $app_confdir/cache:/var/cache/nginx/ -B $app_path:/data $DATAHUB_IMAGE $app_id
+   singularity instance start -B $app_confdir/:/etc/nginx/conf.d -B $app_confdir/var:/var/ -B $app_path:/data $DATAHUB_IMAGE $app_id
    singularity exec instance://$app_id service nginx start
 }
 
