@@ -21,5 +21,4 @@ genapproxy create --app=filebroser --path=$app_path
 
 ## How it's works
 
-[Singproxy Schema](/doc/howitsworks.jpg)
-Format: ![Alt Text](url)
+![](doc/howitsworks.jpg)
