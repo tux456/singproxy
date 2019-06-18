@@ -2,7 +2,7 @@
 
 
 
-# Configure /etc/ssh/sshd_config
+## Configure /etc/ssh/sshd_config
 ```
 Port 12345
 PasswordAuthentication no
@@ -19,7 +19,7 @@ Match User *,!ubuntu,!admin_user
   ForceCommand /bin/false
 ```
 
-# Add public "client" server keys in shosts.equiv
+## Add public "client" server keys in shosts.equiv
 ````
 for i in server1.com server2.com $(dig +short $i);done >/etc/ssh/shosts.equiv
 
@@ -28,7 +28,7 @@ for i in $(cat /etc/ssh/shosts.equiv) ;do ssh-keyscan $i;done>/etc/ssh/ssh_known
 
 
 
-# Configure NGNIX
+## Configure NGNIX
 ```
 apt install nginx
 ln -s /etc/nginx/sites-available/ccproxy /etc/nginx/sites-enabled/ccproxy
@@ -41,7 +41,7 @@ setfacl -d -m g:www-data:rwx /home
 
 
 
-# /etc/nginx/sites-available/ccproxy
+## /etc/nginx/sites-available/ccproxy
 ```
 server {
     listen 443;
@@ -80,7 +80,7 @@ server {
 
 
 
-# Configure SSL cert with ACME DNS  https://github.com/Neilpang/acme.sh
+## Configure SSL cert with ACME DNS  https://github.com/Neilpang/acme.sh
 
 ```
 curl https://get.acme.sh | sh
@@ -104,7 +104,7 @@ Generate the cert ...
 
 
 
-# LDAP & PAM
+## LDAP & PAM
 
 You configure proxy with same authentication system as client with LDAP or other ...
 
