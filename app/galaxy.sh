@@ -99,8 +99,8 @@ function galaxy_start() {
 
   #### TEMPORARY PATCH FOR DAVID ##############
   mkdir -p $app_path/.galaxy/rules
-  rsync -a /nfs3_ib/ip24-ib/home.local/barrette.share/ccproxy.slurm/resub/rules/ $app_path/.galaxy/rules
-  cp -a /nfs3_ib/ip24-ib/home.local/barrette.share/ccproxy.slurm/resub/*.xml $TMP_GALAXY/export/galaxy-central/config/
+  rsync -a $GALAXY_RESUB_SOURCE/rules/ $app_path/.galaxy/rules
+  cp -a $GALAXY_RESUB_SOURCE/*.xml $TMP_GALAXY/export/galaxy-central/config/
 #  touch  $app_path/.galaxy/etc/resub
   #############################################
  
