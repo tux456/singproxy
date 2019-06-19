@@ -53,6 +53,12 @@ if [ -f $NAME_CONF ];then
   source $NAME_CONF
 fi
 
+# Source os env. configuration 
+if [ -f $CCPROXY_CONF_FILE ];then
+  source $CCPROXY_CONF_FILE
+fi
+
+
 # Source command line file configuration
 if [ -f "$m_conf" ];then
 #  echo source $m_conf
