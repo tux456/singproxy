@@ -87,7 +87,7 @@ function galaxy_start() {
 ##############################
 # export dans $TMP_GALAXY 
 ##############################
-  rm -rf $TMP_GALAXY
+  rm -rf $TMP_GALAXY/export
   if [ ! -d $TMP_GALAXY/export ];then 
     mkdir -p $TMP_GALAXY/export;chmod 700 $TMP_GALAXY
 #    galaxy_source=/cvmfs/soft.galaxy/v2/singularity/docker19.01
@@ -109,7 +109,7 @@ function galaxy_start() {
 #  singularity -q instance start -B /home -B $TMP_GALAXY/export:/export -B /nfs3_ib:/nfs3_ib -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/export/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ -B /bin/true:/usr/bin/scontrol /cvmfs/soft.galaxy/v2/singularity/docker19.01/galadock.img $app_id
 #singularity -q instance start -B /home -B $TMP_GALAXY/export:/export -B /nfs3_ib:/nfs3_ib -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/export/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ -B /bin/true:/usr/bin/scontrol $GENAP_GALAXY_SOURCE/galadock.simg $app_id
 
-singularity -q instance start -B /home -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ $GENAP_GALAXY_SOURCE/galadock.simg $app_id
 
 
   sg="singularity exec instance://$app_id"

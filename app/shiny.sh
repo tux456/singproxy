@@ -47,7 +47,7 @@ function shiny_start() {
 #   mkdir -p $app_path/.shiny/site-library
 
 #   singularity instance start -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/.shiny/lib:/srv/shiny-server/florian -B $app_path/.shiny/site-library:/usr/local/lib/R/site-library -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
-   singularity instance start -B /tmp -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
+   singularity instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
    singularity exec instance://$app_id bash -c "nohup shiny-server &"
 
    export REMOTE_FREE_PORT=$SHINY_PORT

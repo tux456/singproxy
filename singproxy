@@ -48,13 +48,13 @@ if [ -z "$m_command" ];then help;exit 0;fi
 
 # Source software configuration
 NAME_CONF=$(dirname $0)/conf/$(basename $0).conf
-if [ -f $NAME_CONF ];then 
+if [ -f "$NAME_CONF" ];then 
 #  echo source $NAME_CONF
   source $NAME_CONF
 fi
 
 # Source os env. configuration 
-if [ -f $CCPROXY_CONF_FILE ];then
+if [ -f "$CCPROXY_CONF_FILE" ];then
   source $CCPROXY_CONF_FILE
 fi
 
@@ -220,7 +220,6 @@ function find_id() {
     fi
   done
   if [ -z "$SLURM_TMPDIR" ];then SLURM_TMPDIR=/tmp/${USER}ccproxy;fi
-  TMP_GALAXY=$SLURM_TMPDIR/$app_id
   starter_find 
 }
 
@@ -257,6 +256,7 @@ function generate_id() {
 
 function create_prolog() {
   find_id
+
   if [ -e "$app_confdir" ];then
     echo "Appplication \"$app_id\" on directory \"$app_path\" already exist, please destroy before creating again"
     exit 0
@@ -279,6 +279,12 @@ function create_epilog() {
 
 function start_prolog() {
   find_id
+  TMP_GALAXY=$SLURM_TMPDIR/$app_id
+  TMP_CONTAINER=$SLURM_TMPDIR/$app_id/tmp
+  HOME_CONTAINER=$SLURM_TMPDIR/$app_id/home
+  mkdir -p $TMP_CONTAINER $HOME_CONTAINER/$USER
+  chmod 700 $SLURM_TMPDIR/$app_id
+
   if [ ! -e "$app_confdir" ];then
     echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
     exit 0
@@ -340,7 +346,7 @@ function stop_epilog() {
    kill_background
    $ssh_starter $(which singularity) instance stop $app_id
    echo "STOPPED" >$app_confdir/status
-   rm $app_confdir/starter
+   rm -f $app_confdir/starter
    run_if_exist ${m_app}_stop_epilog
   }
 

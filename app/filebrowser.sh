@@ -12,7 +12,7 @@ function filebrowser_create {
     file_source="https://github.com/filebrowser/filebrowser/releases/download/"
     #file_release="v2.0.4"
     file_release="$(curl -L -s https://api.github.com/repos/filebrowser/filebrowser/releases/latest | grep -o '"tag_name": ".*"' | sed 's/"//g' | sed 's/tag_name: //g')"
-    (cd $app_confdir;curl -L -s --output $filegz $file_source/$file_release/$filegz; tar zxf $filegz filebrowser;rm $filegz9)
+    (cd $app_confdir;curl -L -s --output $filegz $file_source/$file_release/$filegz; tar zxf $filegz filebrowser;rm $filegz)
   fi
  
   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data docker://alpine $app_id
@@ -34,7 +34,7 @@ function filebrowser_create {
 
 function filebrowser_start() {
    filebrowser_log=$app_confdir/filebrowser.log
-   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data  docker://alpine $app_id
+   singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp -B $app_confdir/:/conf -B $app_path:/data  docker://alpine $app_id
    #app_port="$(remote_freeport)"
    singularity -q exec instance://$app_id rm -f /conf/app.sock
    singularity -q exec instance://$app_id /conf/filebrowser -d /conf/database.db -l /conf/filebrowser.log --socket /conf/app.sock >>$filebrowser_log 2>&1 &
