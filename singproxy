@@ -176,8 +176,8 @@ function remote_connect {
  
 #  echo user=$remote_user dns=$remote_dns port=$remote_port
 
-if [ -f $CCPROXY_SSH_COMMAND ];then
-  SSH_COMMAND="$CCPROXY_SSH_COMMMAND"
+if [ -n "$CCPROXY_SSH_COMMAND" ];then
+  SSH_COMMAND="$CCPROXY_SSH_COMMAND"
 else
   SSH_COMMAND="ssh"
 fi
