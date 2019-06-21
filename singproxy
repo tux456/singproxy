@@ -84,8 +84,8 @@ function run_if_exist() {
 
 function genpass() {
   pass_length=$1
-  if [ -z "$pass_length" ];then pass_length=12;fi
-  cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $pass_length | head -n 1
+  if [ -z "$pass_length" ];then pass_length=16;fi
+  cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $pass_length | head -n 1
 }
 
 
