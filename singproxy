@@ -228,7 +228,7 @@ function generate_id() {
   if [ $(stat -c '%U' "$user_path") != "$USER" -a -z "$CCPROXY_I_KNOW_WHAT_I_AM_DOOING" ];then die "You are not the directory owner, please contact your local system administrator";fi
   if [ -n "${m_id}" ];then 
      app_id=${m_app}${m_id}
-  elif [ "$CCPROXY_ID_GENERATE" == "random" ]
+  elif [ "$CCPROXY_ID_GENERATE" == "random" ];then
      app_id="${m_app}$(genpass)"
   else
      i=1
