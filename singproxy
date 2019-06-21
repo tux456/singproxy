@@ -135,6 +135,8 @@ echo $REMOTE_FREE_PORT
 
 function remote_get {
 #for i in google.com:24000 yahoo.ca;do j=$(echo $i":"|cut -d\: -f1);ping -qc3 $j 2>&1 | awk -F'/' 'END{ printf (/^rtt/? "OK "$5" ":"FAIL") }';echo $i;done |sort -n -k 2|head -1|cut -f3 -d \ 
+# curl -s -w %{time_total}\\n -o /dev/null http://www.google.com
+
 
   if [ -n "$m_remote" ];then
     echo $m_remote>$app_confdir/remote
