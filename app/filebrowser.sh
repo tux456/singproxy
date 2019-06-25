@@ -12,7 +12,7 @@ function filebrowser_create {
     file_source="https://github.com/filebrowser/filebrowser/releases/download/"
     #file_release="v2.0.4"
     file_release="$(curl -L -s https://api.github.com/repos/filebrowser/filebrowser/releases/latest | grep -o '"tag_name": ".*"' | sed 's/"//g' | sed 's/tag_name: //g')"
-    (cd $app_confdir;curl -L -s --output $filegz $file_source/$file_release/$filegz; tar zxf $filegz filebrowser;rm $filegz)
+    (cd $app_confdir;curl -L -s --output $filegz $file_source/$file_release/$filegz; tar --warning=no-timestamp zxf $filegz filebrowser;rm $filegz)
   fi
  
   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data docker://alpine $app_id
