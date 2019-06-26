@@ -10,7 +10,11 @@ function galaxy_useradd() {
 
 function galaxy_pingapi() {
   galaxy_api=$(echo -e $(grep master_api_key $app_path/.galaxy/etc/galaxy/galaxy.yml |cut -d\: -f 2))
-  curl -s --unix-socket $TMP_GALAXY/export/var/run/nginx.sock "http://localhost/api/users?key=$galaxy_api"
+  while [ 1 ];do
+    curl -s --unix-socket $TMP_GALAXY/export/var/run/nginx.sock "http://localhost/api/users?key=$galaxy_api" |grep model_class >/dev/null && break
+    sleep 10
+    echo Trying again ...
+  done
 }
 
 function galaxy_userupdate() {
@@ -130,7 +134,7 @@ singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -
   ln -sf $TMP_GALAXY/export/var/run/nginx.sock $app_confdir/app.sock
   run_background bash $(dirname $0)/resub/resub.sh $app_path
 
-  echo "Wait for Galaxy API ..."
+  echo "Wait for Galaxy API (may take a while for new galaxy)..."
   galaxy_pingapi;sleep 5
 
  # add admin user 
