@@ -16,7 +16,11 @@ function filebrowser_create {
   fi
  
   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data docker://alpine $app_id
-  filebrowser_pass=$(genpass)
+  if [ -n "$m_password" ];then
+    filebrowser_pass="$m_password"
+  else
+    filebrowser_pass=$(genpass)
+  fi
   fb="singularity -q exec instance://$app_id  /conf/filebrowser -d /conf/database.db "
   $fb config init --scope=/data>>$filebrowser_log
   unset filebrowser_auth

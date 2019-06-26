@@ -134,14 +134,16 @@ singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -
   ln -sf $TMP_GALAXY/export/var/run/nginx.sock $app_confdir/app.sock
   run_background bash $(dirname $0)/resub/resub.sh $app_path
 
-  echo "Wait for Galaxy API (may take a while for new galaxy)..."
+  echo "Wait for Galaxy API (may take a while)..."
   galaxy_pingapi;sleep 5
 
  # add admin user 
  if [ ! -f $app_path/.galaxy/admin.txt ];then
     echo "Add admin user..."
     m_user=$USER
-    m_password=$(genpass) # 8
+    if [ -z "$m_password" ];then
+      m_password=$(genpass) # 8
+    fi
     galaxy_useradd >/dev/null
     echo "Galaxy admin user added: $m_user  pass: $m_password"
     touch $app_path/.galaxy/admin.txt
