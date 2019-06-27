@@ -222,6 +222,7 @@ function find_id() {
     fi
   done
   if [ -z "$SLURM_TMPDIR" ];then SLURM_TMPDIR=/tmp/${USER}ccproxy;fi
+  TMP_GALAXY=$SLURM_TMPDIR/$app_id
   starter_find 
 }
 
@@ -283,7 +284,7 @@ function create_epilog() {
 
 function start_prolog() {
   find_id
-  TMP_GALAXY=$SLURM_TMPDIR/$app_id
+  #TMP_GALAXY=$SLURM_TMPDIR/$app_id
   TMP_CONTAINER=$SLURM_TMPDIR/$app_id/tmp
   HOME_CONTAINER=$SLURM_TMPDIR/$app_id/home
   mkdir -p $TMP_CONTAINER $HOME_CONTAINER/$USER
@@ -400,75 +401,6 @@ function destroy_prolog() {
    echo "$app_id app deleted"
 }
 
-
-
-############################################################################
-# Demo 
-############################################################################
-
-function _demo() {
-  export CCPROXY_ECHO_END="quiet"
-
-  if [ -z "$CCPROXY_DEMO_PATH" ];then 
-    CCPROXY_DEMO_PATH=$HOME/genapproxy_demo
-    mkdir -p $CCPROXY_DEMO_PATH;chmod 700 $CCPROXY_DEMO_PATH
-  fi
-
-  if [ -z "$CCPROXY_DEMO_USER" ];then
-    CCPROXY_DEMO_USER=2
-  fi
-
-  tmp_pass=$(genpass)
-  tmp_id=$(genpass)
-  $0 create --app=galaxy --user=admin --password=$tmp_pass --id=$tmp_id --path=$CCPROXY_DEMO_PATH
-  echo "You should not play here!!!" >$CCPROXY_DEMO_PATH/.galaxy/readme.txt
-  $0 create --app=filebrowser --user=admin --password=$tmp_pass --id=$tmp_id --path=$CCPROXY_DEMO_PATH
-  mkdir -p $CCPROXY_DEMO_PATH/datahub
-  $0 create --app=datahub --path=$CCPROXY_DEMO_PATH/datahub --id=$tmp_id
-  echo "Files uploaded here will be visible in the public datahub app" >$CCPROXY_DEMO_PATH/datahub/readme.txt
-  echo  "$USER $tmp_pass  (admin)" >$CCPROXY_DEMO_PATH/user.txt
-  $0 stop --app=filebrowser --path=$CCPROXY_DEMO_PATH
-
-  for i in $(seq 1 $CCPROXY_DEMO_USER);do
-    tmp_pass=$(genpass)
-    $0 useradd --user=user$i --password=$tmp_pass --app=galaxy --path=$CCPROXY_DEMO_PATH 
-    $0 useradd --user=user$i --password=$tmp_pass --scope=/ftp/user$i --app=filebrowser --path=$CCPROXY_DEMO_PATH 
-    echo "Files uploaded here will be visible for \"user$i\" in Galaxy upload tools" >$CCPROXY_DEMO_PATH/ftp/user$i/readme.txt 
-    echo "user$i $tmp_pass" >>$CCPROXY_DEMO_PATH/user.txt
-  done
-
-  $0 start --app=filebrowser --path=$CCPROXY_DEMO_PATH
-
-  echo
-  echo "*******************************************************"
-  echo " The Datahub, Filebrowser and Galaxy app are created, "
-  echo " You can reach them with the following URLs: "
-  echo "*******************************************************"
-  cat ~/.ccproxy/app/*$tmp_id*/url
-  echo
-  echo "*******************************************************"
-  echo " The user credantials are:"
-  echo "*******************************************************"
-  echo "[login] [password]"
-  cat $CCPROXY_DEMO_PATH/user.txt
-  echo
-}
-
-
-function _demo_destroy() {
-  export CCPROXY_ECHO_END="quiet"
-
-  if [ -z "$CCPROXY_DEMO_PATH" ];then
-    CCPROXY_DEMO_PATH=$HOME/genapproxy_demo
-    mkdir -p $CCPROXY_DEMO_PATH;chmod 700 $CCPROXY_DEMO_PATH
-  fi
-
-
-  $0 destroy --app=galaxy --path=$CCPROXY_DEMO_PATH
-  $0 destroy --app=filebrowser --path=$CCPROXY_DEMO_PATH
-  $0 destroy --app=datahub --path=$CCPROXY_DEMO_PATH/datahub
-  rm -rf $CCPROXY_DEMO_PATH
-}
 
 
 
