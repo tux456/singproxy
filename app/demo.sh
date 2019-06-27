@@ -50,7 +50,7 @@ function _demo() {
   echo "$CCPROXY_DEMO_PATH"
   echo
   echo "************************************************************"
-  echo " You can reach them with the following URLs: "
+  echo " You can reach app them with the following URLs: "
   echo "************************************************************"
   for i in galaxy filebrowser datahub; do
     echo -n "$i: "

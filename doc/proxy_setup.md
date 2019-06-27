@@ -20,6 +20,8 @@ Match User *,!ubuntu,!admin_user
 ```
 
 ## Add public "client" server keys in shosts.equiv
+For a host based authentication:
+
 ````
 for i in server1.com server2.com $(dig +short $i);done >/etc/ssh/shosts.equiv
 
