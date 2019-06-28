@@ -5,6 +5,8 @@
 function _demo() {
   export CCPROXY_ECHO_END="quiet"
 
+  if [ -n "$m_path" ];then CCPROXY_DEMO_PATH="$m_path";fi
+
   if [ -z "$CCPROXY_DEMO_PATH" ];then
     CCPROXY_DEMO_PATH=$HOME/genapproxy_demo
     mkdir -p $CCPROXY_DEMO_PATH;chmod 700 $CCPROXY_DEMO_PATH
@@ -69,9 +71,10 @@ function _demo() {
 function _demo_destroy() {
   export CCPROXY_ECHO_END="quiet"
 
+  if [ -n "$m_path" ];then CCPROXY_DEMO_PATH="$m_path";fi
+
   if [ -z "$CCPROXY_DEMO_PATH" ];then
     CCPROXY_DEMO_PATH=$HOME/genapproxy_demo
-    mkdir -p $CCPROXY_DEMO_PATH;chmod 700 $CCPROXY_DEMO_PATH
   fi
 
 

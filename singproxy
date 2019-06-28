@@ -307,6 +307,7 @@ function start_prolog() {
 
 
     echo "#!/bin/bash">$app_confdir/submit-$$.sh
+    echo "export CCPROXY_SSH_COMMAND=\"ssh -J $(hostname) \" " >>$app_confdir/submit-$$.sh
     #echo "$0 start --app=$m_app --path=$app_path --conf=$m_conf >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
     echo "$0 start $arg_resub >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
     echo "while [ \"\$(cat $app_confdir/status)\" != \"STOPPED\" ];do sleep 4;done" >> $app_confdir/submit-$$.sh
