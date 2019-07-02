@@ -24,7 +24,7 @@ genapproxy create --app=filebrowser --path=$app_path
 ![](doc/howitsworks.jpg)
 
 
-##
+## Commands
 
 After you create one application, you can also stop, start, restart and destroy it.  Example:
 
@@ -42,7 +42,15 @@ genapproxy status
 
 By default, the "galaxy" and "filebrowser" application have a local authentication.
 
-```
 
-```
+## Proxy
 
+You can 
+
+
+## Run fully as user?
+
+The purpose of this command is to launch service as user but need singularity installed. It's possible to run singularity without the SUID root,
+can also try proot or fakechroot but tour mileage may vary.  You can also try to run CVMFS as user with "parrot", tested only on CentOS7 kernel.
+
+https://cernvm.cern.ch/portal/filesystem/parrot
