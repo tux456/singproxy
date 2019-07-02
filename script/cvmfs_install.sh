@@ -35,7 +35,8 @@ fin666
 
 # Config soft.galaxy
 cat >/etc/cvmfs/config.d/soft.galaxy.conf <<fin666
-CVMFS_SERVER_URL="http://192.52.34.241:8000/cvmfs/@fqrn@;http://cvmfs-pub-cceast.genap.ca:8000/cvmfs/@fqrn@;http://cvmfs-pub-europe.genap.ca:8000/cvmfs/@fqrn@;http://cvmfs-pub-ccwest.genap.ca:8000/cvmfs/@fqrn@"
+#CVMFS_SERVER_URL="http://192.52.34.241:8000/cvmfs/@fqrn@;http://cvmfs-pub-cceast.genap.ca:8000/cvmfs/@fqrn@;http://cvmfs-pub-europe.genap.ca:8000/cvmfs/@fqrn@;http://cvmfs-pub-ccwest.genap.ca:8000/cvmfs/@fqrn@"
+CVMFS_SERVER_URL="http://192.52.34.241:8000/cvmfs/@fqrn@;http://cvmfs-pub-cceast.genap.ca:8000/cvmfs/@fqrn@"
 CVMFS_KEYS_DIR=/etc/cvmfs/keys/galaxy
 fin666
 
