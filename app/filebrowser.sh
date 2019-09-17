@@ -25,11 +25,14 @@ function filebrowser_create {
   $fb config init --scope=/data>>$filebrowser_log
   unset filebrowser_auth
   if [ -n "$GENAP_FILEBROWSER_REMOTE_USER" ];then filebrowser_auth="--auth.method=proxy --auth.header=$GENAP_FILEBROWSER_REMOTE_USER";fi
+  if [ "$GENAP_FILEBROWSER_REMOTE_USER" == "noauth" ];then filebrowser_auth="--auth.method=noauth";fi
   if [ -d "$CCPROXY_CUSTOM_DIR" ];then
     cp -a $CCPROXY_CUSTOM_DIR/img $app_confdir/img
     $fb config set --branding.name "$CCPROXY_CUSTOM_NAME" --branding.files /conf --branding.disableExternal $filebrowser_auth >>$filebrowser_log
   fi
-  $fb users add $USER $filebrowser_pass --perm.admin >>$filebrowser_log
+  if [ -z "$GENAP_FILEBROWSER_CREATE_OPTION" ];then GENAP_FILEBROWSER_CREATE_OPTION="--perm.admin";fi
+  $fb users add $USER $filebrowser_pass $GENAP_FILEBROWSER_CREATE_OPTION >>$filebrowser_log
+  if [ -n "$GENAP_FILEBROWSER_RULES" ];then $fb rules $GENAP_FILEBROWSER_RULES >>$filebrowser_log;fi
   singularity -q instance stop $app_id >/dev/null
   echo "ADMIN USER CREATED: login: $USER  passwd: $filebrowser_pass"
 
