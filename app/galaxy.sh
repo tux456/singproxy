@@ -42,6 +42,9 @@ function galaxy_create {
   sed -i 's/\$remote_user/$http_remote_user/g' etc/nginx/conf.d/uwsgi.conf
   sed -i 's|uwsgi_pass 127.0.0.1:4001;|uwsgi_pass unix:///var/run/uwsgi.sock;|g' etc/nginx/conf.d/uwsgi.conf
 
+  # DNS
+  echo "nameserver 8.8.8.8" >etc/resolv.conf
+
   # postgresql
   sed -i 's|port = 5432|#port = 5432|g'  etc/postgresql/9.3/main/postgresql.conf
   sed -i "s|data_directory = \(.*\)|data_directory = '/export/postgresql/9.3/main/'|" etc/postgresql/9.3/main/postgresql.conf
