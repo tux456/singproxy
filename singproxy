@@ -213,6 +213,7 @@ function remote_disconnect {
 function find_id() {
   eval m_path=$m_path
   user_path=$(realpath $m_path)
+  user_path=$m_path
 #  app_path=$user_path
   for i in  $ccproxy_dir/app/$m_app*/path;do
     if [ "$user_path" == "$(cat $i 2>/dev/null)" ];then

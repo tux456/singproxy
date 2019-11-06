@@ -42,8 +42,15 @@ function galaxy_create {
   sed -i 's/\$remote_user/$http_remote_user/g' etc/nginx/conf.d/uwsgi.conf
   sed -i 's|uwsgi_pass 127.0.0.1:4001;|uwsgi_pass unix:///var/run/uwsgi.sock;|g' etc/nginx/conf.d/uwsgi.conf
 
+  # /etc/passwd
+  echo "$USER:x:$(id -u):$(id -u):Local Galaxy USER:/home/$USER:/bin/bash" >>etc/passwd
+
   # DNS
-  echo "nameserver 8.8.8.8" >etc/resolv.conf
+  if [ -n "$GENAP_GALAXY_RESOLV" ];then
+    cp $GENAP_GALAXY_RESOLV etc/resolv.conf
+  else
+    echo "nameserver 8.8.8.8" >etc/resolv.conf
+  fi
 
   # postgresql
   sed -i 's|port = 5432|#port = 5432|g'  etc/postgresql/9.3/main/postgresql.conf
@@ -87,8 +94,24 @@ function galaxy_create {
   fi
   sed -i "s|  #brand:\(.*\)|  brand: $CC_CLUSTER/$USER/$app_id|g" etc/galaxy/galaxy.yml
   sed -i 's|  #database_connection:\(.*\)|  database_connection: 'postgresql:///galaxy?user=galaxy\&host=/var/run/postgresql'|g' etc/galaxy/galaxy.yml
- 
-}
+  if [ -n "$GENAP_GALAXY_JOB_CONF" ];then
+    sed -i "s|  job_config_file:\(.*\)|  job_config_file: $GENAP_GALAXY_JOB_CONF |g" etc/galaxy/galaxy.yml
+    sed -i "s|  #job_resource_params_file:\(.*\)|  job_resource_params_file: $GENAP_GALAXY_JOB_RESOURCE_PARAMS_CONF|g" etc/galaxy/galaxy.yml
+  fi
+  if [ -n "$GENAP_GALAXY_TOOL_PATH" ];then
+    sed -i "s|  #tool_path:\(.*\)|  tool_path: $GENAP_GALAXY_TOOL_PATH |g" etc/galaxy/galaxy.yml
+  fi
+  cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~DATABASEDIR~~|$app_path/.galaxy/database|g" > etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
+
+  sed -i "s|  #job_working_directory:\(.*\)|  job_working_directory: $app_path/.galaxy/database/job_working_directory |g" etc/galaxy/galaxy.yml
+
+
+
+#  if [ -n "$GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION" ];then
+#    cp $GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION galaxy-central/lib/galaxy/jobs/rules/resource_allocation_destination.py
+#￼ fi
+
+  }
 
 function galaxy_start() {
 ##############################
@@ -107,7 +130,13 @@ function galaxy_start() {
   #### TEMPORARY PATCH FOR DAVID ##############
   mkdir -p $app_path/.galaxy/rules
   rsync -a $GALAXY_RESUB_SOURCE/rules/ $app_path/.galaxy/rules
+
+  if [ -n "$GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION" ];then
+     cp $GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION $app_path/.galaxy/rules/resource_allocation_destination.py
+  fi
+  
   cp -a $GALAXY_RESUB_SOURCE/*.xml $TMP_GALAXY/export/galaxy-central/config/
+  rsync -a /etc/slurm/ $app_path/.galaxy/etc/slurm
 #  touch  $app_path/.galaxy/etc/resub
   #############################################
  
@@ -116,7 +145,22 @@ function galaxy_start() {
 #  singularity -q instance start -B /home -B $TMP_GALAXY/export:/export -B /nfs3_ib:/nfs3_ib -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/export/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ -B /bin/true:/usr/bin/scontrol /cvmfs/soft.galaxy/v2/singularity/docker19.01/galadock.img $app_id
 #singularity -q instance start -B /home -B $TMP_GALAXY/export:/export -B /nfs3_ib:/nfs3_ib -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /nfs3_ib/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/export/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ -B /bin/true:/usr/bin/scontrol $GENAP_GALAXY_SOURCE/galadock.simg $app_id
 
-singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  $GENAP_GALAXY_EXTRA_MOUNT -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+#singularity_mount_option=" -B /nfs3_ib -B /net/ip24-ib/home.local/barrette.share/template-galaxy-21-jonathan/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy_venv/lib/python2.7/site-packages/pulsar/managers/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /opt/software -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  $GENAP_GALAXY_EXTRA_MOUNT -B $TMP_GALAXY/export/var/run/:/run  -B /var/run/munge:/munge -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database"
+
+
+#singularity_mount_option="-B /net/ip24-ib/home.local/barrette.share/template-singproxy/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B /opt/software -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  $GENAP_GALAXY_EXTRA_MOUNT -B $TMP_GALAXY/export/var/run/:/run  -B /var/run/munge:/munge -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database"
+
+
+#singularity_mount_option="-B /net/ip24-ib/home.local/barrette.share/template-singproxy/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc  -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database -B $app_path/.galaxy/database/   $GENAP_GALAXY_EXTRA_MOUNT"
+
+singularity_mount_option="-B $app_path/.galaxy/etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh:/galaxy-central/lib/galaxy/jobs/runners/util/job_script/DEFAULT_JOB_FILE_TEMPLATE.sh -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc  -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  -B $TMP_GALAXY/export/var/run/:/run  -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database -B $app_path/.galaxy/database/   $GENAP_GALAXY_EXTRA_MOUNT"
+
+#singularity -q instance start -B /opt/software -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  $GENAP_GALAXY_EXTRA_MOUNT -B $TMP_GALAXY/export/var/run/:/run  -B /var/run/munge:/munge -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+
+echo $singularity_mount_option
+NONUSE=slurmctld singularity -q instance start $singularity_mount_option $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+
+
 sleep 5
 
   sg="singularity exec instance://$app_id"
@@ -130,6 +174,7 @@ sleep 5
     echo "restore $pgsql_tar ..."
     #singularity exec instance://$app_id bash -c "psql -U galaxy -q -h /var/run/postgresql/ -f /galaxy-central/database/postgresql-backup/pgsql-dump.last >/dev/null"
   fi
+  $sg ln -s /munge /var/run/munge
   $sg supervisorctl start postgresql
   sleep 5
   $sg nohup bash -c 'while [ 1 ];do mv /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /galaxy-central/database/postgresql-backup/pgsql-while2.tar.gz;tar zcf /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /export/postgresql/9.3/main;sleep 600;done >/var/log/galaxy/pg_bak.log' 2>&1 &
