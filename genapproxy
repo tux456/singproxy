@@ -1,1 +1,438 @@
-singproxy
+#!/bin/bash
+valid_option="command app id path remote login user password scope wait submit submit_opt useradd userupdate option autostart conf rules"
+valid_app="$(cd $(dirname $0)/app;ls |cut -d. -f1 |tr '\n' ' ')"
+#remote_port=22
+ccproxy_dir=~/.ccproxy
+
+
+
+# clean options
+for i in $valid_option;do unset m_$i;done
+
+function help() {
+cat <<fin667
+syntax:
+$(basename $0) [COMMMAND] --app=[APP] --path=[PATH] <OPTIONS>
+COMMAND: create destroy start stop restart
+APP: $valid_app
+PATH: <user data path of the service>
+OPTIONS: --remote=<URL> --conf=<file>
+
+example:
+$(basename $0) create --app=filebrowser --path=~/projects/my_shared_project
+$(basename $0) stop --app=filebrowser --path=~/projects/my_shared_project
+$(basename $0) destroy --app=filebrowser --path=~/projects/my_shared_project
+fin667
+}
+
+
+m_command=$1
+
+while test $# -gt 0; do
+  for i in $valid_option;do
+     if [[ $1 =~ "--$i=" ]];then
+       printf -v "m_"$i "$(echo $1 | sed -e 's/^[^=]*=//g')"
+     fi
+  done
+  shift
+done
+
+if [ -z "$m_command" ];then help;exit 0;fi
+
+
+
+############################################################################
+# Read configuration
+############################################################################
+
+
+# Source software configuration
+NAME_CONF=$(dirname $0)/conf/$(basename $0).conf
+if [ -f "$NAME_CONF" ];then 
+#  echo source $NAME_CONF
+  source $NAME_CONF
+fi
+
+# Source os env. configuration 
+if [ -f "$CCPROXY_CONF_FILE" ];then
+  source $CCPROXY_CONF_FILE
+fi
+
+
+# Source command line file configuration
+if [ -f "$m_conf" ];then
+#  echo source $m_conf
+  source $m_conf
+fi
+
+
+
+############################################################################
+# Miscs functions
+############################################################################
+
+
+function die() {
+  echo $1
+  exit 0
+}
+
+function run_if_exist() { 
+  type $1 >/dev/null 2>&1 && $1
+}
+
+
+function genpass() {
+  pass_length=$1
+  if [ -z "$pass_length" ];then pass_length=12;fi
+  cat /dev/urandom | tr -dc 'a-z0-9' | fold -w $pass_length | head -n 1
+}
+
+
+############################################################################
+# run_background
+############################################################################
+
+
+function starter_find(){
+  ssh_starter=""
+  if [ -f $app_confdir/starter ];then starter="$(cat $app_confdir/starter)";fi
+  if [ -n "$starter" -a "$starter" != "$(hostname)" ] ;then ssh_starter="ssh $starter";fi
+}
+
+function starter_set(){
+  echo $(hostname) >$app_confdir/starter
+}
+
+function run_background(){
+  nohup $* >>$app_confdir/nohup.out 2>&1 &
+  echo -n " $! ">>$app_confdir/nohup.pid
+}
+
+
+function kill_background(){
+  starter_find
+  if [ "$starter" != "$(hostname)" ] ;then ssh_starter="ssh $starter";fi
+  $ssh_starter kill -- $(cat $app_confdir/nohup.pid)
+  rm -f $app_confdir/nohup.pid
+}
+
+
+############################################################################
+# Remote
+############################################################################
+
+
+function remote_freeport {
+  read LOWERPORT UPPERPORT < /proc/sys/net/ipv4/ip_local_port_range
+  while :
+  do
+    REMOTE_FREE_PORT="`shuf -i $LOWERPORT-$UPPERPORT -n 1`"
+    ss -lpn | grep -q ":$PORT " || break
+done
+echo $REMOTE_FREE_PORT
+}
+
+function remote_get {
+#for i in google.com:24000 yahoo.ca;do j=$(echo $i":"|cut -d\: -f1);ping -qc3 $j 2>&1 | awk -F'/' 'END{ printf (/^rtt/? "OK "$5" ":"FAIL") }';echo $i;done |sort -n -k 2|head -1|cut -f3 -d \ 
+# curl -s -w %{time_total}\\n -o /dev/null http://www.google.com
+
+
+  if [ -n "$m_remote" ];then
+    echo $m_remote>$app_confdir/remote
+  fi
+  if [ "$m_remote" == "auto" ];then
+    echo $remote_default>$app_confdir/remote
+  fi
+  if [ ! -f $app_confdir/remote ];then
+    echo $remote_default>$app_confdir/remote
+  fi
+  cat $app_confdir/remote
+}
+
+function remote_create {
+  mkdir -p $ccproxy_dir/remote/
+  #ssh-keygen -q -t rsa -P "" -f $ccproxy_dir/remote/$remote
+#  ssh-copy-id -i $ccproxy_dir/remote/$remote $remote
+}
+
+
+function remote_connect {
+  tcp_port=$1
+  remote="$(remote_get)"
+  if [ ! -f $ccproxy_dir/remote/$remote ];then remote_create;fi
+
+  ssh_opt="-o StrictHostKeyChecking=no -o EnableSSHKeysign=yes -o HostbasedAuthentication=yes -o ServerAliveInterval=90 -o ServerAliveCountMax=2"
+
+  remote_user="$(echo $remote |cut -s -d\@ -f1)"
+  remote_dns="$(echo $remote |cut  -d\@ -f2|cut -d\: -f1)"
+  remote_port="$(echo $remote |cut -s -d\: -f2)"
+
+  if [ -z "$remote_user" ];then 
+    remote_user=$USER
+  fi
+
+  if [ -z "$remote_port" ];then
+    remote_port=22
+  fi
+ 
+#  echo user=$remote_user dns=$remote_dns port=$remote_port
+
+if [ -n "$CCPROXY_SSH_COMMAND" ];then
+  SSH_COMMAND="$CCPROXY_SSH_COMMAND"
+else
+  SSH_COMMAND="ssh"
+fi
+
+
+  if [ -n "$tcp_port" ];then
+    run_background $SSH_COMMAND -N -R /home/$remote_user/${CC_CLUSTER}$app_id.sock:localhost:$tcp_port $ssh_opt -p $remote_port $remote_user@$remote_dns
+  else
+    run_background $SSH_COMMAND -N -R /home/$remote_user/${CC_CLUSTER}$app_id.sock:$app_confdir/app.sock $ssh_opt -p $remote_port $remote_user@$remote_dns
+  fi
+#    echo $! > $app_confdir/ssh.pid
+  echo "Service connected on:"
+  echo "https://$remote_user-${CC_CLUSTER}$app_id.$remote_dns" |tee $app_confdir/url
+}
+
+
+
+function remote_disconnect {
+  kill -9 $(cat $app_confdir/ssh.pid)
+  #kill -- $(cat $app_confdir/ssh.pid)
+}
+
+
+
+
+############################################################################
+# ID
+############################################################################
+
+
+function find_id() {
+  eval m_path=$m_path
+  user_path=$(realpath $m_path)
+  user_path=$m_path
+#  app_path=$user_path
+  for i in  $ccproxy_dir/app/$m_app*/path;do
+    if [ "$user_path" == "$(cat $i 2>/dev/null)" ];then
+      app_path=$user_path
+      app_id=$(echo $i|cut -d\/ -f6)
+      app_confdir=$(dirname $i)
+    fi
+  done
+  if [ -z "$SLURM_TMPDIR" ];then SLURM_TMPDIR=/tmp/${USER}ccproxy;fi
+  TMP_GALAXY=$SLURM_TMPDIR/$app_id
+  starter_find 
+}
+
+function generate_id() {
+  if [ ! -d "$user_path" ];then die "No valid directory";fi
+  if [ $(stat -c '%U' "$user_path") != "$USER" -a -z "$CCPROXY_I_KNOW_WHAT_I_AM_DOOING" ];then die "You are not the directory owner, please contact your local system administrator";fi
+  if [ -n "${m_id}" ];then 
+     app_id=${m_app}${m_id}
+  elif [ "$CCPROXY_ID_GENERATE" == "random" ];then
+     app_id="${m_app}$(genpass)"
+  else
+     i=1
+     while [ -e  $ccproxy_dir/app/${m_app}${i} ]
+     do
+       i=$(($i+1))
+     done
+     app_id=${m_app}${i}
+  fi 
+  app_confdir=$ccproxy_dir/app/$app_id
+  app_path=$user_path
+  mkdir -p $app_confdir;chmod 700 $app_confdir
+  echo $user_path>$app_confdir/path
+  remote="$(remote_get)"
+}
+
+
+
+
+
+############################################################################
+# App
+############################################################################
+
+
+## Create ##
+
+function create_prolog() {
+  find_id
+
+  if [ -e "$app_confdir" ];then
+    echo "Appplication \"$app_id\" on directory \"$app_path\" already exist, please destroy before creating again"
+    exit 0
+  else
+    generate_id
+  fi
+  echo "Creating $app_id on $app_path ..."
+}
+
+function create_epilog() {
+  if [ ! "$m_autostart" == "false" ] ;then 
+    start_prolog
+    ${m_app}_start
+    start_epilog
+  fi
+}
+
+
+## Start ##
+
+function start_prolog() {
+  find_id
+  #TMP_GALAXY=$SLURM_TMPDIR/$app_id
+  TMP_CONTAINER=$SLURM_TMPDIR/$app_id/tmp
+  HOME_CONTAINER=$SLURM_TMPDIR/$app_id/home
+  mkdir -p $TMP_CONTAINER $HOME_CONTAINER/$USER
+  chmod 700 $SLURM_TMPDIR/$app_id
+
+  if [ ! -e "$app_confdir" ];then
+    echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
+    exit 0
+  fi
+  if [ "$(cat $app_confdir/status 2>/dev/null)" == "STARTED" ];then
+    echo "Already started, try restart"
+    exit 0
+  fi
+
+  if [ -n "$m_submit" ];then
+    arg_resub=$(for i in  $valid_option;do 
+       var="m_$i"
+       if [ -n "${!var}" -a "$i" != "command" -a "$i" != "submit" ]; then echo -n " --$i="${!var}"";fi
+       done)
+
+
+    echo "#!/bin/bash">$app_confdir/submit-$$.sh
+    echo "export CCPROXY_SSH_COMMAND=\"ssh -J $(hostname) \" " >>$app_confdir/submit-$$.sh
+    #echo "$0 start --app=$m_app --path=$app_path --conf=$m_conf >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
+    echo "$0 start $arg_resub >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
+    echo "while [ \"\$(cat $app_confdir/status)\" != \"STOPPED\" ];do sleep 4;done" >> $app_confdir/submit-$$.sh
+    $m_submit $m_submit_opt $app_confdir/submit-$$.sh
+    echo "Job submitted, waiting for output file $app_confdir/submit-$$.sh.out ..."
+    while [ ! -f "$app_confdir/submit-$$.sh.out" ];do sleep 3;done
+    cd $app_confdir;ln -sf submit-$$.sh.out last.out
+    bash -c 'while [ "$i" != "FINISHED" ];do i=$(tail -1 last.out);sleep 3;done '&
+    tail -f -n +1 --pid=$! $app_confdir/submit-$$.sh.out
+#    sh -c "tail -n +0 -f $app_confdir/submit-$$.sh.out | { sed '/FINISHED/ q' && kill \$\$ ;}" 2>/dev/null
+    exit 0
+  fi
+
+  echo "STARTED" >$app_confdir/status
+  starter_set
+  echo "Starting $app_id on $(hostname) ..."
+
+  # Clean old socket
+  if [ -f $app_confdir/app.sock ];then echo rm -f $app_confdir/app.sock;rm -f $app_confdir/app.sock;fi
+}
+
+function start_epilog() {
+#if [ ! "$m_autostart" == "false" ] ;then ${m_app}_start;fi
+   remote_connect $REMOTE_FREE_PORT
+}
+
+
+## Stop ###
+
+function stop_prolog() {
+  find_id
+  if [ ! -e "$app_confdir" ];then
+    echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
+    exit 0
+  fi
+#  remote_disconnect
+  starter_find
+#  kill_background
+}
+
+function stop_epilog() {
+   kill_background
+   $ssh_starter $(which singularity) instance stop $app_id
+   echo "STOPPED" >$app_confdir/status
+   rm -f $app_confdir/starter
+   run_if_exist ${m_app}_stop_epilog
+  }
+
+
+## Restart ##
+
+function restart_prolog() {
+  stop_prolog
+  run_if_exist ${m_app}_stop
+  stop_epilog
+  sleep 5
+}
+
+function restart_epilog() {
+  start_prolog
+  run_if_exist ${m_app}_start
+  start_epilog
+}
+
+
+
+## Status ##
+
+function _status() {
+   echo "Directory list:"
+   for i in $ccproxy_dir/app/*;do echo $(basename $i) $(cat $i/status) $([ -f $i/starter ] &&cat $i/starter) $(cat $i/path) $(cat $i/url);done
+   echo
+   echo "Process list:"
+   for i in $(cat ~/.ccproxy/app/*/starter |sort -u);do
+     echo "$i:"
+     if [ "$i" == "$(hostname)" ];then
+        singularity instance list
+     else
+        ssh $i $(which singularity) instance list
+     fi
+   done
+}
+
+
+## Destroy ##
+
+function destroy_prolog() {
+   stop_prolog
+   run_if_exist ${m_app}_stop
+   stop_epilog
+   rm -rf $app_confdir
+   echo "$app_id app deleted"
+}
+
+
+
+
+############################################################################
+# Source application function
+############################################################################
+for i in $(dirname $0)/app/*sh;do
+  source $i
+done
+
+
+
+
+
+############################################################################
+# Main
+############################################################################
+
+
+if [ -z "$(command -v singularity)" -a -n "$(command -v module)" ];then
+  module add singularity
+fi
+
+if [ -z "$(command -v singularity)" ];then
+  echo "You need singularity"
+fi
+
+run_if_exist ${m_command}_prolog
+run_if_exist ${m_app}_${m_command}
+run_if_exist ${m_command}_epilog
+
+
+if [ -z "$CCPROXY_ECHO_END" ];then echo FINISHED;fi
