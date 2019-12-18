@@ -62,3 +62,7 @@ function shiny_start() {
    export REMOTE_FREE_PORT=$SHINY_PORT
 }
 
+
+function shiny_stop() {
+  echo Stopping shiny...
+}

@@ -1,6 +1,13 @@
 #!/bin/bash
 valid_option="command app id path remote login user password scope wait queueing submit submit_opt useradd userupdate option autostart conf rules"
-valid_app="$(cd $(dirname $0)/app;ls |cut -d. -f1 |tr '\n' ' ')"
+
+if [ -n "$SLURM_JOB_ID" ];  then
+  script_name=$(scontrol show job $SLURM_JOB_ID | grep ^\ \ \ Command=|cut -d= -f2 |cut -d\  -f1)
+else
+  script_name=$0
+fi
+
+valid_app="$(cd $(dirname $script_name)/app;ls |cut -d. -f1 |tr '\n' ' ')"
 #remote_port=22
 ccproxy_dir=~/.ccproxy
 
@@ -47,7 +54,8 @@ if [ -z "$m_command" ];then help;exit 0;fi
 
 
 # Source software configuration
-NAME_CONF=$(dirname $0)/conf/$(basename $0).conf
+echo script_name=$script_name
+NAME_CONF=$(dirname $script_name)/conf/$(basename $script_name).conf
 if [ -f "$NAME_CONF" ];then 
 #  echo source $NAME_CONF
   source $NAME_CONF
@@ -310,7 +318,7 @@ function start_prolog() {
     echo "#!/bin/bash">$app_confdir/submit-$$.sh
     echo "export CCPROXY_SSH_COMMAND=\"ssh -J $(hostname) \" " >>$app_confdir/submit-$$.sh
     #echo "$0 start --app=$m_app --path=$app_path --conf=$m_conf >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
-    echo "$0 start $arg_resub >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
+    echo "$script_name start $arg_resub >$app_confdir/submit-$$.sh.out 2>&1" >> $app_confdir/submit-$$.sh
     echo "while [ \"\$(cat $app_confdir/status)\" != \"STOPPED\" ];do sleep 4;done" >> $app_confdir/submit-$$.sh
     $m_submit $m_submit_opt $app_confdir/submit-$$.sh
     echo "Job submitted, waiting for output file $app_confdir/submit-$$.sh.out ..."
@@ -410,7 +418,7 @@ function destroy_prolog() {
 ############################################################################
 # Source application function
 ############################################################################
-for i in $(dirname $0)/app/*sh;do
+for i in $(dirname $script_name)/app/*sh;do
   source $i
 done
 
@@ -435,17 +443,21 @@ run_if_exist ${m_command}_prolog
 run_if_exist ${m_app}_${m_command}
 run_if_exist ${m_command}_epilog
 
-if [ -n "$m_queueing" ];then
-  trap_handler () {
-   echo "Caught signal"
-   ${m_app}_stop
-   exit 0
-  }
 
-  trap trap_handler SIGUSR1
+# Trap SLURM
+
+trap_handler () {
+ echo "Caught signal"
+ stop_prolog
+ ${m_app}_stop
+ stop_epilog
+ exit 0
+}
+trap trap_handler SIGUSR1
+
+if [ -n "$m_queueing" ];then
   sleep infinity&
   wait
+elif [ -z "$CCPROXY_ECHO_END" ];then
+  echo FINISHED
 fi
-
-
-if [ -z "$CCPROXY_ECHO_END" ];then echo FINISHED;fi
