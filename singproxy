@@ -1,5 +1,5 @@
 #!/bin/bash
-valid_option="command app id path remote login user password scope wait submit submit_opt useradd userupdate option autostart conf rules"
+valid_option="command app id path remote login user password scope wait queueing submit submit_opt useradd userupdate option autostart conf rules"
 valid_app="$(cd $(dirname $0)/app;ls |cut -d. -f1 |tr '\n' ' ')"
 #remote_port=22
 ccproxy_dir=~/.ccproxy
@@ -328,6 +328,7 @@ function start_prolog() {
 
   # Clean old socket
   if [ -f $app_confdir/app.sock ];then echo rm -f $app_confdir/app.sock;rm -f $app_confdir/app.sock;fi
+  if [ -f ~/.singularity/instances/sing/*/$USER/$app_id/$app_id.json ];then rm -f ~/.singularity/instances/sing/*/$USER/$app_id/$app_id.json;fi 
 }
 
 function start_epilog() {
@@ -433,6 +434,18 @@ fi
 run_if_exist ${m_command}_prolog
 run_if_exist ${m_app}_${m_command}
 run_if_exist ${m_command}_epilog
+
+if [ -n "$m_queueing" ];then
+  trap_handler () {
+   echo "Caught signal"
+   ${m_app}_stop
+   exit 0
+  }
+
+  trap trap_handler SIGUSR1
+  sleep infinity&
+  wait
+fi
 
 
 if [ -z "$CCPROXY_ECHO_END" ];then echo FINISHED;fi
