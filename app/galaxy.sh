@@ -189,7 +189,7 @@ sleep 5
   $sg nohup bash -c 'while [ 1 ];do mv /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /galaxy-central/database/postgresql-backup/pgsql-while2.tar.gz;tar zcf /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /export/postgresql/9.3/main;sleep 600;done >/var/log/galaxy/pg_bak.log' 2>&1 &
   $sg supervisorctl start galaxy:
   ln -sf $TMP_GALAXY/export/var/run/nginx.sock $app_confdir/app.sock
-  run_background bash $(dirname $0)/resub/resub.sh $app_path
+  run_background bash $(dirname $script_name)/resub/resub.sh $app_path
 
   echo "Wait for Galaxy API (may take a while)..."
   galaxy_pingapi;sleep 5
