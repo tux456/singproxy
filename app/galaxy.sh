@@ -101,7 +101,8 @@ function galaxy_create {
   if [ -n "$GENAP_GALAXY_TOOL_PATH" ];then
     sed -i "s|  #tool_path:\(.*\)|  tool_path: $GENAP_GALAXY_TOOL_PATH |g" etc/galaxy/galaxy.yml
   fi
-  cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~DATABASEDIR~~|$app_path/.galaxy/database|g" > etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
+#  cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~DATABASEDIR~~|$app_path/.galaxy/database|g" > etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
+  cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~APP_PATH~~|$app_path|g" > etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
 
   sed -i "s|  #job_working_directory:\(.*\)|  job_working_directory: $app_path/.galaxy/database/job_working_directory |g" etc/galaxy/galaxy.yml
 
@@ -136,6 +137,9 @@ function galaxy_start() {
   
   cp -a $GALAXY_RESUB_SOURCE/*.xml $TMP_GALAXY/export/galaxy-central/config/
   rsync -a /etc/slurm/ $app_path/.galaxy/etc/slurm
+
+
+  cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~APP_PATH~~|$app_path|g" > $app_path/.galaxy/etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
 #  touch  $app_path/.galaxy/etc/resub
   #############################################
 
