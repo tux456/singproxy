@@ -2,6 +2,13 @@
 # Galaxy
 ############################################################################
 
+#  PGV=9.3
+if [ -n "$PG_VERSION" ];then
+  PGV=$PG_VERSION
+else
+  PGV=9.3
+fi
+
 function galaxy_useradd() {
   find_id
   galaxy_api=$(echo -e $(grep master_api_key $app_path/.galaxy/etc/galaxy/galaxy.yml |cut -d\: -f 2))
@@ -35,7 +42,6 @@ function galaxy_create {
   tar xf $GENAP_GALAXY_SOURCE/etc.tar -C $app_path/.galaxy/
   cd $app_path/.galaxy/
   mkdir -p etc ../ftp database/postgresql-backup/  # postgresql-backup database galaxy-central/database
-
   # etc/nginx/nginx.conf
   sed -i 's|listen 80;|listen unix:/var/run/nginx.sock;|g'  etc/nginx/nginx.conf
   sed -i '/^http {.*/a\    underscores_in_headers on;' etc/nginx/nginx.conf
@@ -53,14 +59,15 @@ function galaxy_create {
   fi
 
   # postgresql
-  sed -i 's|port = 5432|#port = 5432|g'  etc/postgresql/9.3/main/postgresql.conf
-  sed -i "s|data_directory = \(.*\)|data_directory = '/export/postgresql/9.3/main/'|" etc/postgresql/9.3/main/postgresql.conf
-  sed -i 's/peer/trust/g' etc/postgresql/9.3/main/pg_hba.conf
+  sed -i 's|port = 5432|#port = 5432|g'  etc/postgresql/$PGV/main/postgresql.conf
+  sed -i "s|data_directory = \(.*\)|data_directory = '/export/postgresql/$PGV/main/'|" etc/postgresql/$PGV/main/postgresql.conf
+  sed -i 's/peer/trust/g' etc/postgresql/$PGV/main/pg_hba.conf
   sed -i 's/^user /\#user/g' etc/supervisor/conf.d/galaxy.conf
   sed -i 's|.*/bin/postmaster.*|& -c "listen_addresses="|' etc/supervisor/conf.d/galaxy.conf
   sed -i 's|/home/galaxy/logs|/var/log/galaxy|g' etc/supervisor/conf.d/galaxy.conf
   sed -i 's/^autostart\(.*\)/autostart       = false/g' etc/supervisor/conf.d/galaxy.conf
   sed -i 's/^\[inet_http_server\]/\#[inet_http_server]/g' etc/supervisor/conf.d/galaxy.conf
+  chmod 700 etc/ssl/private/ssl-cert-snakeoil.key
 
   # galaxy supervriso
   sed -i 's/^port=0.0.0.0:9002/\#port=0.0.0.0:9002/g' etc/supervisor/conf.d/galaxy.conf
@@ -124,7 +131,8 @@ function galaxy_start() {
 #    tar zxf $galaxy_source/export_small.tar.gz -C $TMP_GALAXY
     tar xf $GENAP_GALAXY_SOURCE/export2.tar -C $TMP_GALAXY
     cd $TMP_GALAXY/export
-    mkdir -p var/run/postgresql var/sock var/log/supervisor var/log/nginx var/log/galaxy var/lib/nginx #var/lib/munge var/run/munge
+    mkdir -p var/run/postgresql/11-main.pg_stat_tmp var/run/postgresql var/sock var/log/supervisor var/log/nginx var/log/galaxy var/lib/nginx #var/lib/munge var/run/munge
+#    mkdir postgresql/9.3/main
   fi
 
   #### TEMPORARY PATCH FOR DAVID ##############
@@ -177,12 +185,13 @@ NONUSE=slurmctld singularity -q instance start $singularity_mount_option $GENAP_
 sleep 5
 
   sg="singularity exec instance://$app_id"
-  $sg /usr/bin/python /usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf
+  #$sg /usr/bin/python /usr/local/bin/supervisord -c /etc/supervisor/supervisord.conf
+  $sg supervisord -c /etc/supervisor/supervisord.conf
   if [ -f export/var/run/nginx.sock ];then rm export/var/run/nginx.sock;fi
   $sg supervisorctl start nginx
   pgsql_tar="$(ls -St -d $app_path/.galaxy/database/postgresql-backup/pgsql-*.tar.gz 2>/dev/null |head -1)"
   if [ -f "$pgsql_tar" ];then
-    rm -rf $TMP_GALAXY/export/postgresql/9.3/main
+    rm -rf $TMP_GALAXY/export/postgresql/$PGV/main
     tar zxf  $pgsql_tar -C $TMP_GALAXY/
     echo "restore $pgsql_tar ..."
     #singularity exec instance://$app_id bash -c "psql -U galaxy -q -h /var/run/postgresql/ -f /galaxy-central/database/postgresql-backup/pgsql-dump.last >/dev/null"
@@ -190,7 +199,7 @@ sleep 5
   $sg ln -s /munge /var/run/munge
   $sg supervisorctl start postgresql
   sleep 5
-  $sg nohup bash -c 'while [ 1 ];do mv /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /galaxy-central/database/postgresql-backup/pgsql-while2.tar.gz;tar zcf /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /export/postgresql/9.3/main;sleep 600;done >/var/log/galaxy/pg_bak.log' 2>&1 &
+  $sg nohup bash -c "while [ 1 ];do mv /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /galaxy-central/database/postgresql-backup/pgsql-while2.tar.gz;tar zcf /galaxy-central/database/postgresql-backup/pgsql-while.tar.gz /export/postgresql/$PGV/main;sleep 600;done >/var/log/galaxy/pg_bak.log" 2>&1 &
   $sg supervisorctl start galaxy:
   ln -sf $TMP_GALAXY/export/var/run/nginx.sock $app_confdir/app.sock
   run_background bash $(dirname $script_name)/resub/resub.sh $app_path
@@ -216,7 +225,7 @@ function galaxy_stop() {
   sg="$ssh_starter $(which singularity) exec instance://$app_id"
   $sg supervisorctl stop galaxy:
   $sg supervisorctl stop postgresql
-  $sg tar zcf /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz /export/postgresql/9.3/main
+  $sg tar zcf /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz /export/postgresql/$PGV/main
 }
 
 function galaxy_stop_epilog() {

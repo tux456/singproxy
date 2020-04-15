@@ -54,7 +54,7 @@ function shiny_start() {
 #   mkdir -p $app_path/.shiny/site-library
 
 #   singularity instance start -B $app_confdir/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/.shiny/lib:/srv/shiny-server/florian -B $app_path/.shiny/site-library:/usr/local/lib/R/site-library -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
-   singularity instance start -H $app_path/.shiny/home -B $TMP_CONTAINER:/tmp -B $app_path/.shiny/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B  $app_path/.shiny/lib:/var/lib/shiny-server -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
+   singularity instance start -H $app_path/.shiny/home -B $TMP_CONTAINER:/tmp -B $app_path/.shiny/shiny-server.conf:/etc/shiny-server/shiny-server.conf -B  $app_path/.shiny/lib:/var/lib/shiny-server -B $app_path/.shiny/log:/var/log/shiny-server -B $app_path/ftp:/ftp -B /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/shiny/rootfs.florian/home/florian:/home/florian $SHINY_IMAGE $app_id
 #   singularity exec instance://$app_id bash -c 'sed "s|/srv/shiny-server|/srv/shiny-server/sample-apps/scCluster_genap2|g" -i /etc/shiny-server/shiny-server.conf'
    singularity exec instance://$app_id bash -c "nohup shiny-server >/var/log/shiny-server/nohup.out &"
 #   singularity exec instance://$app_id bash -c "cat /etc/shiny-server//shiny-server.conf"
