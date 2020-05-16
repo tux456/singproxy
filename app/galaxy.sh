@@ -223,9 +223,10 @@ sleep 5
 
 function galaxy_stop() {
   sg="$ssh_starter $(which singularity) exec instance://$app_id"
+  rm -f /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz.OK
   $sg supervisorctl stop galaxy:
   $sg supervisorctl stop postgresql
-  $sg tar zcf /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz /export/postgresql/$PGV/main
+  $sg tar zcf /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz /export/postgresql/$PGV/main || touch /galaxy-central/database/postgresql-backup/pgsql-stop.tar.gz.OK
 }
 
 function galaxy_stop_epilog() {
