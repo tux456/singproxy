@@ -11,6 +11,11 @@ valid_app="$(cd $(dirname $script_name)/app;ls |cut -d. -f1 |tr '\n' ' ')"
 #remote_port=22
 ccproxy_dir=~/.ccproxy
 
+# trap pour Max
+err_fatale() {
+    echo "FATAL Merdier"
+}
+trap 'err_fatale' ERR
 
 
 # clean options
@@ -292,6 +297,7 @@ function create_epilog() {
 ## Start ##
 
 function start_prolog() {
+  echo "STARTING $app_id ..."
   find_id
   #TMP_GALAXY=$SLURM_TMPDIR/$app_id
   TMP_CONTAINER=$SLURM_TMPDIR/$app_id/tmp
@@ -348,6 +354,7 @@ function start_epilog() {
 ## Stop ###
 
 function stop_prolog() {
+  echo "STOPING $app_id ..."
   find_id
   if [ ! -e "$app_confdir" ];then
     echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
