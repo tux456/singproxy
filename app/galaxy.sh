@@ -148,6 +148,10 @@ function galaxy_start() {
 
 
   cat /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/DEFAULT_JOB_FILE_TEMPLATE.sh |sed "s|~~APP_PATH~~|$app_path|g" > $app_path/.galaxy/etc/galaxy/DEFAULT_JOB_FILE_TEMPLATE.sh
+
+
+  # list of tools that by default should run on slurm
+  cp /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/SlurmToolList.py $app_path/.galaxy/rules/
 #  touch  $app_path/.galaxy/etc/resub
   #############################################
 

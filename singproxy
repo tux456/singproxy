@@ -1,5 +1,5 @@
 #!/bin/bash
-valid_option="command app id path remote login user password scope wait queueing submit submit_opt useradd userupdate option autostart conf rules"
+valid_option="command app id path remote login user password scope wait queueing submit submit_opt useradd userupdate option autostart conf rules rest_auth on_shutdown_url"
 
 if [ -n "$SLURM_JOB_ID" ];  then
   script_name=$(scontrol show job $SLURM_JOB_ID | grep ^\ \ \ Command=|cut -d= -f2 |cut -d\  -f1)
@@ -235,6 +235,12 @@ function find_id() {
       app_confdir=$(dirname $i)
     fi
   done
+  ####### Fix pour app deleted 2020-05-25 #######
+  if [ -n "${m_id}" ];then
+   app_id=${m_app}${m_id}
+  fi
+  ##############################################
+
   if [ -z "$SLURM_TMPDIR" ];then SLURM_TMPDIR=/tmp/${USER}ccproxy;fi
   TMP_GALAXY=$SLURM_TMPDIR/$app_id
   starter_find 
@@ -371,6 +377,10 @@ function stop_epilog() {
    echo "STOPPED" >$app_confdir/status
    rm -f $app_confdir/starter
    run_if_exist ${m_app}_stop_epilog
+   if [ -n "${m_on_shutdown_url}" ];then 
+     curl -H ${m_rest_auth} ${m_on_shutdown_url}
+     echo curl -H ${m_rest_auth} ${m_on_shutdown_url} > $app_confdir/shutdown.txt
+   fi
   }
 
 
