@@ -236,8 +236,12 @@ function find_id() {
     fi
   done
   ####### Fix pour app deleted 2020-05-25 #######
-  if [ -n "${m_id}" ];then
+  if [ -n "${m_id}" -a -n "${m_path}" ];then
    app_id=${m_app}${m_id}
+   app_path=${m_path}
+   #mkdir -p $ccproxy_dir/app/$app_id
+   echo "${m_path}">$ccproxy_dir/app/$app_id/path
+   app_confdir=$ccproxy_dir/app/$app_id
   fi
   ##############################################
 
@@ -312,8 +316,16 @@ function start_prolog() {
   chmod 700 $SLURM_TMPDIR/$app_id
 
   if [ ! -e "$app_confdir" ];then
-    echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
-    exit 0
+#   generate_id
+#  ${m_app}_create
+    if [ "${m_app}" == "filebrowser" ];then
+      $0 create --autostart=false --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf}
+      $0 useradd --app=filebrowser --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf} --user=$USER --password==3f2ad3c0-c3fc-491d-8324-ce527bba9ce3
+      $0 start --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf}
+    else
+      echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
+      exit 0
+    fi
   fi
   if [ "$(cat $app_confdir/status 2>/dev/null)" == "STARTED" ];then
     echo "Already started, try restart"
@@ -364,7 +376,7 @@ function stop_prolog() {
   find_id
   if [ ! -e "$app_confdir" ];then
     echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
-    exit 0
+    [ "${m_app}" == "filebrowser" ] ||exit 0
   fi
 #  remote_disconnect
   starter_find
@@ -377,7 +389,7 @@ function stop_epilog() {
    echo "STOPPED" >$app_confdir/status
    rm -f $app_confdir/starter
    run_if_exist ${m_app}_stop_epilog
-   if [ -n "${m_on_shutdown_url}" ];then 
+   if [ -n "${m_on_shutdown_url}" -a "${m_command}" != "stop" -a -n "$stop_by_signal" ];then 
      curl -H ${m_rest_auth} ${m_on_shutdown_url}
      echo curl -H ${m_rest_auth} ${m_on_shutdown_url} > $app_confdir/shutdown.txt
    fi
@@ -467,6 +479,7 @@ trap_handler () {
  echo "Caught signal"
  stop_prolog
  ${m_app}_stop
+ stop_by_signal=1
  stop_epilog
  exit 0
 }

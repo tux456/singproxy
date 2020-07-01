@@ -89,6 +89,7 @@ function galaxy_create {
   sed -i "s|  #master_api_key:\(.*\)|  master_api_key: `genpass 20`|g" etc/galaxy/galaxy.yml
   sed -i 's|  #ftp_upload_dir:\(.*\)|  ftp_upload_dir: /ftp|g' etc/galaxy/galaxy.yml
   sed -i 's|  #ftp_upload_dir_identifier:\(.*\)|  ftp_upload_dir_identifier: username|g' etc/galaxy/galaxy.yml
+  sed -i 's|  #ftp_upload_dir_template:\(.*\)|  ftp_upload_dir_template: /ftp/share|g' etc/galaxy/galaxy.yml
   sed -i "s|  #admin_users:\(.*\)|  admin_users: $USER@g.ca|g" etc/galaxy/galaxy.yml
   if [ -n "$GENAP_GALAXY_REMOTE_USER" ];then
     sed -i "s|  #require_login:\(.*\)|  require_login: false|g" etc/galaxy/galaxy.yml
