@@ -4,7 +4,8 @@
 ############################################################################
 
 function scsva_create() {
-mkdir -p $app_path/.scsva/{lib,log,home} $app_path/ftp
+#mkdir -p $app_path/.scsva/{lib,log,home} $app_path/ftp
+echo nothing to do for job creation
 }
 
 
@@ -15,8 +16,9 @@ function scsva_start() {
    SHINY_PORT=$(remote_freeport)
 
 #   singularity instance start -H $app_path/.scva/home -B $TMP_CONTAINER:/tmp  -B  $app_path/.scsva/lib:/var/lib/shiny-server -B $app_path/.scsva/log:/var/log/shiny-server -B $app_path/ftp:/ftp $SHINY_IMAGE $app_id
-   singularity instance start -H $app_path/.scva/home -B $TMP_CONTAINER:/tmp  -B  $app_path/.scsva/lib:/var/lib/shiny-server -B $app_path/.scsva/log:/var/log/shiny-server -B $app_path/ftp/share:/ftp $GENAP_SCSVA_ROOTFS $app_id
-   nohup singularity exec instance://$app_id R -e "shiny::runApp('/usr/local/lib/R/site-library/scSVA/scSVA', port=$SHINY_PORT, launch.browser = TRUE)"> $app_path/.scsva/log/scsva.log & 
+#   singularity instance start -H $app_path/.scva/home -B $TMP_CONTAINER:/tmp  -B  $app_path/.scsva/lib:/var/lib/shiny-server -B $app_path/.scsva/log:/var/log/shiny-server -B $app_path/ftp/share:/ftp $GENAP_SCSVA_ROOTFS $app_id
+   singularity instance start -H $TMP_CONTAINER -B $TMP_CONTAINER:/tmp -B $app_path/ftp/share:/ftp $GENAP_SCSVA_ROOTFS $app_id
+   nohup singularity exec instance://$app_id R -e "shiny::runApp('/usr/local/lib/R/site-library/scSVA/scSVA', port=$SHINY_PORT, launch.browser = TRUE)"> $app_path/.logs/scsva.log & 
    export REMOTE_FREE_PORT=$SHINY_PORT
 }
 
