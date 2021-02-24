@@ -136,9 +136,13 @@ function galaxy_start() {
 #    mkdir postgresql/9.3/main
   fi
 
-  #### TEMPORARY PATCH FOR DAVID ##############
+  #### TEMPORARY PATCH FOR DAVID ##############################################################################
   mkdir -p $app_path/.galaxy/rules
-  rsync -a $GALAXY_RESUB_SOURCE/rules/ $app_path/.galaxy/rules
+########  rsync -a $GALAXY_RESUB_SOURCE/rules/ $app_path/.galaxy/rules
+rsync -a /nfs3_ib/ip24-ib/home.local/barrette.share/singproxy-slurm2/resub/rules/ $app_path/.galaxy/rules
+cd /cvmfs/cvmfs-config.galaxyproject.org
+###################################################################################################################
+
 
   if [ -n "$GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION" ];then
      cp $GENAP_GALAXY_RESOURCE_ALLOCATION_DESTINATION $app_path/.galaxy/rules/resource_allocation_destination.py
@@ -154,7 +158,11 @@ function galaxy_start() {
   # list of tools that by default should run on slurm
   cp /nfs3_ib/ip24/home.local/barrette.share/template-singproxy/galaxy/etc_arbutus/SlurmToolList.py $app_path/.galaxy/rules/
 #  touch  $app_path/.galaxy/etc/resub
-  #############################################
+  
+  # Changement temporaire du welcome.html  pointe dans /net/ip24/home.local/barrette.share/template-galaxy-21-jonathan/rootfs/cvmfs/soft.galaxy/v2.1/web
+  sed  's|alias /etc/galaxy/web;|alias /cvmfs/soft.galaxy/v2.1/web;|' -i $app_path/.galaxy/etc/nginx/nginx.conf
+
+#############################################
 
 
    # key submit to slurm
@@ -184,9 +192,11 @@ singularity_mount_option="-B $app_path/.galaxy/etc/galaxy/DEFAULT_JOB_FILE_TEMPL
 
 #singularity -q instance start -B /opt/software -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp  -B $TMP_GALAXY/export:/export -B $TMP_GALAXY/export/var/log:/var/log  -B $TMP_GALAXY/export/var/lib/nginx/:/var/lib/nginx/ -B $app_path/.galaxy/etc:/etc -B $GENAP_CVMFS_SOFT_GALAXY_SOURCE:/cvmfs/soft.galaxy:ro  $GENAP_GALAXY_EXTRA_MOUNT -B $TMP_GALAXY/export/var/run/:/run  -B /var/run/munge:/munge -B $app_path/.galaxy/rules:/galaxy-central/lib/galaxy/jobs/rules -B $app_path/.galaxy/database/:/export/galaxy-central/database/ -B $app_path/ftp:/ftp -B $app_path/.galaxy/database/:/galaxy-central/database/ $GENAP_GALAXY_SOURCE/galadock.simg $app_id
 
-echo $singularity_mount_option
-NONUSE=slurmctld singularity -q instance start $singularity_mount_option $GENAP_GALAXY_SOURCE/galadock.simg $app_id
 
+echo $singularity_mount_option
+echo singularity -q instance start $singularity_mount_option $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+#NONUSE=slurmctld singularity -q instance start $singularity_mount_option $GENAP_GALAXY_SOURCE/galadock.simg $app_id
+NONUSE=slurmctld singularity -q instance start $singularity_mount_option $GENAP_GALAXY_SOURCE/galadock $app_id
 
 sleep 5
 

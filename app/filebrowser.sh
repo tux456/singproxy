@@ -16,6 +16,7 @@ function filebrowser_create {
   fi
  
   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data docker://alpine $app_id
+  #singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data /net/ip24/home.local/barrette.share/filebrowser/alpine_latest.sif $app_id
   if [ -n "$m_password" ];then
     filebrowser_pass="$m_password"
   else
@@ -40,8 +41,19 @@ function filebrowser_create {
 
 
 function filebrowser_start() {
+
+# Patch temporaire MB 2020-10-29
+if [ ! -z "$GENAP_FILEBROWSER_AUTOZAP" ];then
+  rm -f $app_confdir/filebrowser $app_confdir/database.db
+  cp -f $GENAP_FILEBROWSER_FILE $app_confdir/filebrowser
+  cp -f $GENAP_FILEBROWSER_DB $app_confdir/database.db
+fi
+
+
    filebrowser_log=$app_confdir/filebrowser.log
    singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp -B $app_confdir/:/conf -B $app_path:/data  docker://alpine $app_id
+#   singularity -q instance start -B $HOME_CONTAINER:/home -B $TMP_CONTAINER:/tmp -B $app_confdir/:/conf -B $app_path:/data  /net/ip24/home.local/barrette.share/filebrowser/alpine_latest.sif $app_id
+
    #app_port="$(remote_freeport)"
    singularity -q exec instance://$app_id rm -f /conf/app.sock
    singularity -q exec instance://$app_id /conf/filebrowser -d /conf/database.db -l /conf/filebrowser.log --socket /conf/app.sock >>$filebrowser_log 2>&1 &
@@ -55,6 +67,7 @@ function filebrowser_exec() {
 
   filebrowser_log=$app_confdir/filebrowser.log
   singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data docker://alpine $app_id
+#  singularity -q instance start -B $app_confdir/:/conf -B $app_path:/data /net/ip24/home.local/barrette.share/filebrowser/alpine_latest.sif $app_id
   fb="singularity -q exec -B $app_confdir/:/conf -B $app_path:/data instance://$app_id  /conf/filebrowser -d /conf/database.db "
   $fb $* # >>$filebrowser_log
   singularity -q instance stop $app_id >/dev/null
