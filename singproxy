@@ -322,6 +322,8 @@ function start_prolog() {
       $0 create --autostart=false --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf}
       $0 useradd --app=filebrowser --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf} --user=$USER --password==3f2ad3c0-c3fc-491d-8324-ce527bba9ce3
       $0 start --app=filebrowser --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf}
+    elif  [ "${m_app}" == "scap" ];then
+      $0 create --autostart=false --app=scap --id=${m_id} --path=${m_path} --remote=${m_remote} --conf=${m_conf}
     else
       echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
       exit 0
@@ -376,7 +378,7 @@ function stop_prolog() {
   find_id
   if [ ! -e "$app_confdir" ];then
     echo "Appplication \"$m_app\" on directory \"$user_path\" does not exist"
-    [ "${m_app}" == "filebrowser" ] ||exit 0
+    [ "${m_app}" == "filebrowser" -o "${m_app}" == "scap" ] ||exit 0
   fi
 #  remote_disconnect
   starter_find
